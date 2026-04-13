@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 
 from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String
-from sqlalchemy.orm import Mapped, Session, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from upkeeper.core import JSONDict
 from upkeeper.logging_config import get_logger
