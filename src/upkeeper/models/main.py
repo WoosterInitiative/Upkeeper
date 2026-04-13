@@ -33,7 +33,7 @@ class LogEntry(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     tracked_item_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("tracked_item.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("tracked_item.id", ondelete="CASCADE"), nullable=False
     )
     action: Mapped[str] = mapped_column(String(255), nullable=False)
     notes: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -54,20 +54,20 @@ class Tag(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
+    slug: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
 
     log_tags: Mapped[list["LogTag"]] = relationship("LogTag", back_populates="tag")
+    item_tags: Mapped[list["ItemTag"]] = relationship("ItemTag", back_populates="tag")
 
 
 class LogTag(Base):
     __tablename__ = "log_tag"  # pyright: ignore[reportUnannotatedClassAttribute]
 
-    tag_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("tag.id", ondelete="CASCADE"), primary_key=True
-    )
+    tag_id: Mapped[int] = mapped_column(ForeignKey("tag.id", ondelete="CASCADE"), primary_key=True)
     tag: Mapped["Tag"] = relationship("Tag", back_populates="log_tags")
 
     log_entry_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("log_entry.id", ondelete="CASCADE"), primary_key=True
+        ForeignKey("log_entry.id", ondelete="CASCADE"), primary_key=True
     )
     log_entry: Mapped["LogEntry"] = relationship("LogEntry", back_populates="tags")
 
@@ -76,11 +76,9 @@ class ItemTag(Base):
     __tablename__ = "item_tag"  # pyright: ignore[reportUnannotatedClassAttribute]
 
     tracked_item_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("tracked_item.id", ondelete="CASCADE"), primary_key=True
+        ForeignKey("tracked_item.id", ondelete="CASCADE"), primary_key=True
     )
-    tracked_item: Mapped["TrackedItem"] = relationship("TrackedItem", back_populates="item_tags")
+    tracked_item: Mapped["TrackedItem"] = relationship("TrackedItem", back_populates="tags")
 
-    tag_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("tag.id", ondelete="CASCADE"), primary_key=True
-    )
+    tag_id: Mapped[int] = mapped_column(ForeignKey("tag.id", ondelete="CASCADE"), primary_key=True)
     tag: Mapped["Tag"] = relationship("Tag", back_populates="item_tags")

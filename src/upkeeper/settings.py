@@ -16,6 +16,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 type DBPath = Path | AnyUrl
 
+VERSION = "0.1.0"
+
 
 class Settings(BaseSettings):
     model_config: SettingsConfigDict = SettingsConfigDict(  # pyright: ignore[reportIncompatibleVariableOverride]
