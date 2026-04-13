@@ -2,7 +2,10 @@
 # ruff: noqa: B008
 """Created by upkeeper.devtools.create_module."""
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -15,7 +18,11 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/health", tags=["health"])
 
 
-@router.get("")
+class HealthCheckResponse(BaseModel):
+    status: Literal["ok"]
+
+
+@router.get("", response_model=HealthCheckResponse)
 def health_check(db: Session = Depends(get_db)) -> dict[str, str]:
     _ = db.execute(text("SELECT 1"))
     return {"status": "ok"}
