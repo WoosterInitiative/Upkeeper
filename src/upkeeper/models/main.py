@@ -54,7 +54,7 @@ class Tag(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
-    slug: Mapped[str | None] = mapped_column(String(100), nullable=True, unique=True)
+    slug: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
 
     log_tags: Mapped[list["LogTag"]] = relationship("LogTag", back_populates="tag")
     item_tags: Mapped[list["ItemTag"]] = relationship("ItemTag", back_populates="tag")
