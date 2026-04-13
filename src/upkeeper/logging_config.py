@@ -4,9 +4,10 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from importlib.util import find_spec
 from types import TracebackType
-from typing import TYPE_CHECKING, TypeAlias, cast, final
+from typing import TYPE_CHECKING, cast, final
 
-from . import TRACE_LEVEL
+from typer import Option as TyperOption
+
 from .settings import settings
 
 if TYPE_CHECKING:
@@ -14,14 +15,15 @@ if TYPE_CHECKING:
     from rich.theme import Theme
 
 # ---- Custom TRACE level ----------------------------------------------------
+TRACE_LEVEL = "TRACE", 5
 TRACE_LEVEL_NAME, TRACE_LEVEL_NUM = TRACE_LEVEL
 logging.addLevelName(TRACE_LEVEL_NUM, TRACE_LEVEL_NAME)
 
-_SysExcInfoType: TypeAlias = (
+type _SysExcInfoType = (
     tuple[type[BaseException], BaseException, TracebackType | None] | tuple[None, None, None]
 )
-_ExcInfoType: TypeAlias = None | bool | _SysExcInfoType | BaseException
-_ArgsType: TypeAlias = tuple[object, ...] | Mapping[str, object]
+type _ExcInfoType = None | bool | _SysExcInfoType | BaseException
+type _ArgsType = tuple[object, ...] | Mapping[str, object]
 
 
 def trace(
@@ -177,6 +179,25 @@ def get_logger(name: str) -> "MyLogger":
     return cast("MyLogger", logging.getLogger(name))
 
 
+def get_console() -> "Console":
+    """
+    Get the Rich console instance used by the logging system.
+
+    This ensures that all Rich output (logging, progress bars, etc.)
+    uses the same console instance, preventing output conflicts.
+
+    Returns:
+        Console: The shared Rich console instance.
+    """
+    if not _console.is_configured:
+        setup_logging()
+
+    if _console.console is None:
+        raise RuntimeError("Console not configured properly")
+
+    return _console.console
+
+
 # ---- Utility for custom levels --------------------------------------------
 def add_log_level(name: str, level_num: int) -> None:
     if hasattr(logging, name.lower()):
@@ -209,3 +230,47 @@ def add_log_level(name: str, level_num: int) -> None:
             )
 
     setattr(logging.Logger, name.lower(), log_for_level)
+
+
+## CLI Helpers --------------------------------------------------------
+
+
+def verbosity_option(help_text: str = "Increase verbosity level (can be used multiple times)"):  # pyright: ignore[reportAny]
+    """
+    Create a verbosity command-line option.
+
+    This option can be used multiple times to increase the verbosity level of logging.
+    Each occurrence of the option decreases the logging level by 10 (e.g., from WARNING to INFO to DEBUG).
+
+    Args:
+        help_text (str): The help text for the command-line option.
+
+    Returns:
+        typer.Option: A Typer option configured for verbosity.
+    """
+    return TyperOption("-v", "--verbose", help=help_text, count=True)  # pyright: ignore[reportAny]
+
+
+LEVEL_MAPPING = {
+    0: logging.WARNING,
+    1: logging.INFO,
+    2: logging.DEBUG,
+    3: TRACE_LEVEL_NUM,
+}
+
+
+def set_log_level(verbosity: int) -> None:
+    """
+    Set the log level based on verbosity count.
+
+    0 = WARNING
+    1 = INFO
+    2 = DEBUG
+    3 = TRACE
+
+    Args:
+        verbosity (int): The verbosity count from command-line options.
+    """
+    level = LEVEL_MAPPING[verbosity]
+
+    logging.getLogger().setLevel(level)

@@ -4,10 +4,12 @@
 name = "Upkeeper"
 description = "Track it once. Forget it safely."
 readme = "README.md"
-requires-python = ">=3.11,<4.0"
-license = "MIT"
+requires-python = ">=3.12,<4.0"
+
+license-files = ["LICENSE"]
+
 authors = [
-  { name = "Karl Wooster", email = "karl@woostertech.com" },
+  { name = "Karl Wooster", email = "karlwooster@gmail.com" },
 ]
 # https://pypi.org/classifiers/
 # Adjust as needed:
@@ -17,23 +19,23 @@ classifiers = [
   # "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
+  # Include this to avoid accidentally publishing to PyPI:
+  "Private :: Do Not Upload",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Typing :: Typed",
-  # Include this to avoid accidentally publishing to PyPI:
-  # "Private :: Do Not Upload",
 ]
 # ---- Main dependencies ----
 dependencies = [
   "pydantic-settings>=2.11.0",
+  "typer>=0.24.1",
 ]
 dynamic = ["version"]
 
 [project.urls]
-Repository = "https://github.com/WoosterTech/Upkeeper"
+Repository = "https://github.com/WoosterInitiative/Upkeeper"
 # Homepage = "https://..."
 # Documentation = "https://..."
 
@@ -53,7 +55,9 @@ dev = [
   "basedpyright>=1.31.0",
   "codespell>=2.4.1",
   "deptry>=0.23.0",
-  "funlog>=0.2.1",
+  "ipython>=9.8.0",
+  "jinja2>=3.1.6",
+  "pydantic>=2.11.9",
   "pytest>=8.3.5",
   "pytest-sugar>=1.0.0",
   "rich>=14.0.0",
@@ -81,7 +85,7 @@ packages = ["src/upkeeper"]
 
 # ---- Settings ----
 
-[tool.pytest.ini_options]
+[tool.pytest]
 filterwarnings = []
 norecursedirs = []
 python_classes = ["Test*"]

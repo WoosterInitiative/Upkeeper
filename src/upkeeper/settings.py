@@ -13,8 +13,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(  # pyright: ignore[reportUnannotatedClassAttribute]
-        env_file=".env", env_file_encoding="utf-8", case_sensitive=False
+    model_config: SettingsConfigDict = SettingsConfigDict(  # pyright: ignore[reportIncompatibleVariableOverride]
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        env_prefix="UPKEEPER_",
+        extra="ignore",
     )
 
     debug: bool = False
