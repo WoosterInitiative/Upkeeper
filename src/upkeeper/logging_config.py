@@ -111,9 +111,16 @@ def setup_logging(rich_tracebacks: bool = True) -> None:
     """
     global _configured
 
-    # Resolve level: LOG_LEVEL env > settings.default_log_level
-    if (level_name := settings.log_level) is not None:
-        level: int = logging.getLevelNamesMapping()[level_name]
+    if _configured:
+        return
+
+    # Import settings here to avoid circular imports
+    from .settings import settings
+
+    # Resolve level: LOG_LEVEL env > settings based level
+    if settings.log_level is not None:
+        # Convert string to level number
+        level: int = logging.getLevelNamesMapping().get(settings.log_level.upper(), logging.INFO)
     else:
         level = settings.default_log_level
 
@@ -155,12 +162,47 @@ def setup_logging(rich_tracebacks: bool = True) -> None:
 
     root.addHandler(handler)
 
+    # Configure SQLAlchemy logging
+    _configure_sqlalchemy_logging(level)
+
     if _console.rich:
         from rich.traceback import install
 
         _ = install(show_locals=True, console=_console.console)
 
     _configured = True
+
+
+def _configure_sqlalchemy_logging(level: int) -> None:
+    """
+    Configure SQLAlchemy specific loggers.
+
+    Args:
+        level: The logging level to set for SQLAlchemy loggers
+    """
+    # SQLAlchemy Engine logging (connection pool, etc.)
+    sqlalchemy_engine = logging.getLogger("sqlalchemy.engine")
+    sqlalchemy_engine.setLevel(level)
+
+    # SQLAlchemy SQL statement logging - only show if DEBUG or TRACE
+    sqlalchemy_engine_sql = logging.getLogger("sqlalchemy.engine.Engine")
+    if level <= logging.DEBUG:
+        sqlalchemy_engine_sql.setLevel(
+            logging.INFO
+        )  # Show SQL statements at INFO when app is DEBUG
+    else:
+        sqlalchemy_engine_sql.setLevel(logging.WARNING)  # Hide SQL statements otherwise
+
+    # SQLAlchemy connection pool logging
+    sqlalchemy_pool = logging.getLogger("sqlalchemy.pool")
+    sqlalchemy_pool.setLevel(max(level, logging.INFO))  # Never below INFO
+
+    # SQLAlchemy ORM logging
+    sqlalchemy_orm = logging.getLogger("sqlalchemy.orm")
+    if level <= TRACE_LEVEL_NUM:
+        sqlalchemy_orm.setLevel(logging.DEBUG)  # Show ORM details at TRACE level
+    else:
+        sqlalchemy_orm.setLevel(logging.WARNING)  # Hide ORM details otherwise
 
 
 def get_logger(name: str) -> "MyLogger":
@@ -271,6 +313,21 @@ def set_log_level(verbosity: int) -> None:
     Args:
         verbosity (int): The verbosity count from command-line options.
     """
-    level = LEVEL_MAPPING[verbosity]
+    level = LEVEL_MAPPING.get(verbosity, logging.WARNING)
+    logging.getLogger().setLevel(level)
+    _configure_sqlalchemy_logging(level)
+
+
+def set_log_level_by_name(level_name: str) -> None:
+    """
+    Set the log level by name at runtime.
+
+    Args:
+        level_name: The log level name (TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    """
+    level = logging.getLevelNamesMapping().get(level_name.upper())
+    if level is None:
+        raise ValueError(f"Invalid log level: {level_name}")
 
     logging.getLogger().setLevel(level)
+    _configure_sqlalchemy_logging(level)
