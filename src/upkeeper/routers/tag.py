@@ -13,7 +13,7 @@ from upkeeper.database import get_db
 from upkeeper.logging_config import get_logger
 from upkeeper.models.base import generate_unique_slug
 from upkeeper.models.main import ItemTag, Tag, TrackedItem
-from upkeeper.routers.base import BaseDetailResponse
+from upkeeper.routers.base import BaseAPI, BaseDetailResponse
 from upkeeper.routers.entry import LogEntryResponse
 from upkeeper.routers.tracked_item import TrackedItemResponse
 
@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/tags", tags=["tags"])
 
 
-class TagResponse(BaseModel):
+class TagResponse(BaseAPI):
     id: int
     name: str
     slug: str

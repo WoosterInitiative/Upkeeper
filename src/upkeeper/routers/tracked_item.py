@@ -13,7 +13,7 @@ from upkeeper.database import get_db
 from upkeeper.logging_config import get_logger
 from upkeeper.models.base import generate_unique_slug
 from upkeeper.models.main import TrackedItem
-from upkeeper.routers.base import BaseDetailResponse, TimestampResponseMixin
+from upkeeper.routers.base import BaseAPI, BaseDetailResponse, TimestampResponseMixin
 
 logger = get_logger(__name__)
 
@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/items", tags=["items"])
 
 
-class TrackedItemResponse(TimestampResponseMixin):
+class TrackedItemResponse(TimestampResponseMixin, BaseAPI):
     id: int
     name: str
     slug: str
@@ -36,7 +36,7 @@ def list_tracked_items(session: Session = Depends(get_db)) -> list[TrackedItem]:
     return session.query(TrackedItem).all()
 
 
-class TrackedItemCreateRequest(BaseModel):
+class TrackedItemCreateRequest(BaseAPI):
     name: Annotated[str, Field(min_length=1, max_length=100)]
     location: Annotated[str | None, Field(max_length=100)] = None
     notes: Annotated[str | None, Field(max_length=255)] = None
