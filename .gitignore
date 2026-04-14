@@ -9,6 +9,8 @@ tmp/
 trash/
 attic/
 .kash/
+# Temporary OpenAPI files (used by pre-commit hook)
+.openapi*temp.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

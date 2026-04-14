@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI
+from fastapi.routing import APIRoute
 
 # Import setup_logging instead of set_log_level and call it first
 from upkeeper.logging_config import get_logger, setup_logging
@@ -27,9 +28,20 @@ async def lifespan(app: FastAPI):  # pyright: ignore[reportUnusedParameter]
     yield
 
 
+def custom_generate_unique_id(route: APIRoute) -> str:
+    """Custom function to generate unique operation IDs for FastAPI routes."""
+    return f"{route.tags[0]}-{route.name}"
+
+
 def create_app() -> FastAPI:
     """Factory function to create and configure the FastAPI app."""
-    app = FastAPI(title=settings.app_name, version=VERSION, debug=settings.debug, lifespan=lifespan)
+    app = FastAPI(
+        title=settings.app_name,
+        version=VERSION,
+        generate_unique_id_function=custom_generate_unique_id,
+        debug=settings.debug,
+        lifespan=lifespan,
+    )
     app.include_router(health.router)
     app.include_router(tracked_item.router)
     app.include_router(entry.router)

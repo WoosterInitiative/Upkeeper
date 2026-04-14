@@ -5,6 +5,8 @@ from typing import Annotated, ClassVar
 import typer
 from jinja2 import Environment, PackageLoader, Template
 
+from upkeeper.scripts.openapi import OpenAPIGenerator
+
 from .core import ProjectContext
 from .logging_config import get_console, get_logger
 
@@ -198,6 +200,41 @@ def shell(
 
         console.print(banner)
         code.interact(local=ns)
+
+
+@app.command()
+def generate_openapi_spec(
+    ctx: ProjectContext,
+    client: Annotated[
+        bool, typer.Option("--client", help="Process spec for client consumption")
+    ] = False,
+    output: Annotated[
+        Path,
+        typer.Option("-o", "--output", help="File path to write the OpenAPI spec JSON"),
+    ] = Path("openapi.json"),  # pyright: ignore[reportCallInDefaultInitializer]
+) -> None:
+    """Generate the OpenAPI specification JSON file for the FastAPI application."""
+    import json
+
+    dry_run = ctx.obj.dry_run
+    generator = OpenAPIGenerator()
+
+    spec = generator.get_spec()
+
+    if client:
+        generator.process_spec_for_client()
+        spec = generator.get_client_spec()
+
+    if not dry_run:
+        _ = output.write_text(json.dumps(spec, indent=2), encoding="utf-8")
+        console.print(
+            f"[bold green]OpenAPI spec generated at: [u cyan]{output}[/u cyan][/bold green]"
+        )
+    else:
+        console.print(
+            f"[yellow]Dry run: OpenAPI spec would be generated and written to: [u cyan]{output}[/u cyan][/yellow]"
+        )
+        console.print(spec)
 
 
 if __name__ == "__main__":
