@@ -7,18 +7,26 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate-types": "node scripts/generate-types.mjs",
+    "generate-types:check": "node scripts/generate-types.mjs --dry-run",
+    "generate-types:from-file": "node scripts/generate-types.mjs --from-file",
+    "save-schema": "node scripts/generate-types.mjs --save",
+    "types:watch": "chokidar \"../src/**/*.py\" -c \"npm run generate-types\""
   },
   "dependencies": {
+    "@hey-api/client-fetch": "^0.4.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@hey-api/openapi-ts": "^0.96.0",
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "chokidar-cli": "^3.0.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",

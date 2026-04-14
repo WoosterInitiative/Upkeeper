@@ -1,0 +1,131 @@
+name: Frontend Type Generation
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'src/upkeeper/**/*.py'
+      - 'openapi.json'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'src/upkeeper/**/*.py'
+      - 'openapi.json'
+      - 'frontend/**/*'
+
+jobs:
+  generate-types:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    # Backend setup
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+
+    - name: Start FastAPI server
+      run: |
+        python -m uvicorn upkeeper.main:app --port 8102 &
+        echo $! > fastapi.pid
+        # Wait for server to be ready
+        timeout 30s bash -c 'until curl -f http://localhost:8102/health; do sleep 1; done'
+
+    # Frontend setup and type generation
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm ci
+
+    - name: Generate TypeScript types
+      working-directory: ./frontend
+      run: |
+        # Generate types from running server
+        npm run generate-types
+
+        # Also save schema for future use
+        npm run save-schema
+
+    - name: Stop FastAPI server
+      run: |
+        if [ -f fastapi.pid ]; then
+          kill $(cat fastapi.pid) || true
+          rm fastapi.pid
+        fi
+
+    - name: Check for changes
+      id: verify-changed-files
+      run: |
+        if git diff --quiet HEAD -- frontend/src/api/ openapi.json; then
+          echo "changed=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Commit updated types
+      if: steps.verify-changed-files.outputs.changed == 'true' && github.event_name == 'push'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action Bot"
+        git add frontend/src/api/ openapi.json
+        git commit -m "🤖 Update generated API types [skip ci]"
+        git push
+
+    - name: Fail if types are outdated (PR only)
+      if: steps.verify-changed-files.outputs.changed == 'true' && github.event_name == 'pull_request'
+      run: |
+        echo "❌ Generated types are outdated!"
+        echo ""
+        echo "The FastAPI OpenAPI schema has changed but the generated TypeScript types haven't been updated."
+        echo ""
+        echo "To fix this:"
+        echo "1. Make sure your FastAPI server is running locally on port 8102"
+        echo "2. Run: cd frontend && npm run generate-types"
+        echo "3. Commit the changes to frontend/src/api/ and openapi.json"
+        echo ""
+        echo "Or run: cd frontend && npm run save-schema && git add . && git commit -m 'Update API types'"
+        echo ""
+        git diff --name-only HEAD -- frontend/src/api/ openapi.json
+        exit 1
+
+  # Fallback job for when FastAPI server can't be started
+  validate-from-schema:
+    runs-on: ubuntu-latest
+    if: failure()  # Only run if the main job fails
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm ci
+
+    - name: Generate types from saved schema
+      working-directory: ./frontend
+      run: |
+        if [ -f ../openapi.json ]; then
+          npm run generate-types:from-file
+        else
+          echo "No saved schema file found. Skipping type validation."
+          exit 0
+        fi
