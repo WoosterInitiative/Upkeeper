@@ -6,14 +6,14 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field
+from pydantic import Field
 from sqlalchemy.orm import Session, joinedload
 
 from upkeeper.core import JSONDict
 from upkeeper.database import get_db
 from upkeeper.logging_config import get_logger
 from upkeeper.models.main import LogEntry
-from upkeeper.routers.base import BaseDetailResponse, TimestampResponseMixin
+from upkeeper.routers.base import BaseAPI, BaseDetailResponse, TimestampResponseMixin
 from upkeeper.routers.tracked_item import TrackedItemResponse
 
 logger = get_logger(__name__)
@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/entries", tags=["entries"])
 
 
-class LogEntryResponse(TimestampResponseMixin):
+class LogEntryResponse(TimestampResponseMixin, BaseAPI):
     id: int
     tracked_item_id: int
     action: str
@@ -36,7 +36,7 @@ class LogEntryExtraResponse(LogEntryResponse):
     tracked_item: TrackedItemResponse
 
 
-class LogEntryCreateRequest(BaseModel):
+class LogEntryCreateRequest(BaseAPI):
     tracked_item_id: int
     action: Annotated[str, Field(min_length=1, max_length=255)]
     notes: Annotated[str | None, Field(max_length=255)] = None

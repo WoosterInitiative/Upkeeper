@@ -5,7 +5,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import Field
 from sqlalchemy.orm import Session
 
 from upkeeper.core import JSONDict, slugify

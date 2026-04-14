@@ -5,11 +5,11 @@
 from typing import Literal
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from upkeeper.logging_config import get_logger
+from upkeeper.routers.base import BaseAPI
 
 from ..database import get_db
 
@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/health", tags=["health"])
 
 
-class HealthCheckResponse(BaseModel):
+class HealthCheckResponse(BaseAPI):
     status: Literal["ok"]
 
 

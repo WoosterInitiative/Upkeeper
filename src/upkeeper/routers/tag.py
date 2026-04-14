@@ -12,7 +12,7 @@ from upkeeper.core import slugify
 from upkeeper.database import get_db
 from upkeeper.logging_config import get_logger
 from upkeeper.models.base import generate_unique_slug
-from upkeeper.models.main import ItemTag, Tag, TrackedItem
+from upkeeper.models.main import Tag
 from upkeeper.routers.base import BaseAPI, BaseDetailResponse
 from upkeeper.routers.entry import LogEntryResponse
 from upkeeper.routers.tracked_item import TrackedItemResponse
